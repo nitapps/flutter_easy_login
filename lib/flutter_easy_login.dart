@@ -21,9 +21,9 @@ class LoginPage extends StatelessWidget {
     isUsingFirebaseAuth = false}) :assert(
   invalidPasswordMessage == null || passwordRequirements == null,
   "Cannot provide both values, either use invalidPasswordMessage or passwordRequirements"
-  ),assert(
-  !isUsingFirebaseAuth && checkEmail != null && login != null && register != null
-      && sendPasswordResetEmail != null && signOut != null,
+  ),assert( isUsingFirebaseAuth ||
+  (!isUsingFirebaseAuth && checkEmail != null && login != null && register != null
+      && sendPasswordResetEmail != null && signOut != null),
   "If [isUsingFirebaseAuth] is false then must provide methods for [checkEmail],"
       "[login], [register], [sendPasswordResetEmail] and [logout]"
   ){
