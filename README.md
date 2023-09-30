@@ -7,8 +7,9 @@ An Easy and Simple UI for Authentication.
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
+![Registration screen shot](../assets/start.png?raw=true)
+![Registration screen shot](../assets/login.png?raw=true)
+![Registration screen shot](../assets/register.png?raw=true)
 
 ## Usage
 
