@@ -1,6 +1,11 @@
 import 'dart:core';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+/// the provider that manage the authentication and auth changes
+///
+/// this provider need to be created in the [main] method - [runApp] method with
+/// the [ChangeNotifierProvider]
 class AuthProvider extends ChangeNotifier{
   AuthState authState = AuthState.loggedOut;
   String? userName;
@@ -16,6 +21,8 @@ class AuthProvider extends ChangeNotifier{
   /// used to display error messages in login, register, reset/update password.
   AuthExceptionType? authExceptionType;
 
+  /// checks the user is logged in or not and based on that updates the
+  /// [email] and [authState]
   final void Function(AuthProvider) initializeLoginState;
 
   AuthProvider(this.initializeLoginState){
@@ -31,8 +38,8 @@ class AuthProvider extends ChangeNotifier{
     authExceptionType = null;
     notifyListeners();
     await logout(authProvider);
-      email = null;
-      authState = AuthState.loggedOut;
+    email = null;
+    authState = AuthState.loggedOut;
     isLoading = false;
     notifyListeners();
   }
@@ -43,7 +50,7 @@ class AuthProvider extends ChangeNotifier{
     this.email = null;
     notifyListeners();
     bool result = await checkEmail(email, authProvider);
-      this.email = email;
+    this.email = email;
     isLoading = false;
     notifyListeners();
     return result;
@@ -55,18 +62,18 @@ class AuthProvider extends ChangeNotifier{
     notifyListeners();
     bool isLoginSuccess = false;
     final result = await login(email, password, authProvider);
-      if(result){
-        if(FirebaseAuth.instance.currentUser != null){
-          authState = AuthState.loggedIn;
-          userName = FirebaseAuth.instance.currentUser!.displayName;
-          email = FirebaseAuth.instance.currentUser!.email!;
-          notifyListeners();
-          isLoginSuccess =  true;
-        }
+    if(result){
+      if(FirebaseAuth.instance.currentUser != null){
+        authState = AuthState.loggedIn;
+        userName = FirebaseAuth.instance.currentUser!.displayName;
+        email = FirebaseAuth.instance.currentUser!.email!;
+        notifyListeners();
+        isLoginSuccess =  true;
       }
+    }
     isLoading = false;
     notifyListeners();
-      return isLoginSuccess;
+    return isLoginSuccess;
   }
 
   Future<bool> registerWith(String email, String password, String name, AuthProvider authProvider, Future<bool> Function(String, String, String, AuthProvider) register) async {

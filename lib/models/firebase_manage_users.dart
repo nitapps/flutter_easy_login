@@ -8,19 +8,19 @@ class FirebaseManageUsers{
   static String emailRegex = r"^(?=.{1,64}@)([a-zA-Z\d]+([\.\-_]?[a-zA-Z\d]+)*)@(?=.{4,63}$)([a-zA-Z\d]+([\.\-]?[a-zA-Z\d]+)*\.[a-zA-Z\d]{2,})$";
 
   static void listenToFirebaseAuthStateChanges(AuthProvider authProvider){
-  FirebaseAuth.instance.authStateChanges().listen((user) {
-  if(user == null){
-  authProvider.email = null;
-  authProvider.authState = AuthState.loggedOut;
-  authProvider.notify();
-  }else{
-  authProvider.authState = AuthState.loggedIn;
-  authProvider.userName = user.displayName;
-  authProvider.email = user.email;
-  authProvider.notify();
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      if(user == null){
+        authProvider.email = null;
+        authProvider.authState = AuthState.loggedOut;
+        authProvider.notify();
+      }else{
+        authProvider.authState = AuthState.loggedIn;
+        authProvider.userName = user.displayName;
+        authProvider.email = user.email;
+        authProvider.notify();
+      }
+    });
   }
-  });
-}
 
   static Future<bool> doesAccountExistWithThis(String email, AuthProvider authProvider)async{
     bool isAccountExists = false;

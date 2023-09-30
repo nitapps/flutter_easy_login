@@ -1,6 +1,7 @@
 library flutter_easy_login;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_easy_login/models/firebase_manage_users.dart';
 import 'package:flutter_easy_login/widgets/button_widgets.dart';
 import 'package:flutter_easy_login/widgets/message_container.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -10,15 +11,30 @@ import 'models/auth_provider.dart';
 import 'models/constants.dart';
 import 'models/helper_functions.dart';
 
-
+/// The First widget of the app for Login and Registration
+///
+/// If user is logged in then the [child] screen is shown as the home screen
 class LoginPage extends StatelessWidget {
-  const LoginPage({super.key,  required this.appName, required this.child, required this.passwordRegex,
-    this.invalidPasswordMessage, this.passwordRequirements, required this.checkEmail,
-    required this.login, required this.register, required this.sentPasswordResetEmail,
-    required this.logout, this.isUsingFirebaseAuth}) :assert(
+  LoginPage({super.key,  required this.appName, required this.child, required this.passwordRegex,
+    this.invalidPasswordMessage, this.passwordRequirements, this.checkEmail,
+    this.login, this.register, this.sendPasswordResetEmail, this.signOut, this.
+    isUsingFirebaseAuth = false}) :assert(
   invalidPasswordMessage == null || passwordRequirements == null,
   "Cannot provide both values, either use invalidPasswordMessage or passwordRequirements"
-  );
+  ),assert(
+  !isUsingFirebaseAuth && checkEmail != null && login != null && register != null
+      && sendPasswordResetEmail != null && signOut != null,
+  "If [isUsingFirebaseAuth] is false then must provide methods for [checkEmail],"
+      "[login], [register], [sendPasswordResetEmail] and [logout]"
+  ){
+    if(isUsingFirebaseAuth){
+      checkEmail = FirebaseManageUsers.doesAccountExistWithThis;
+      login = FirebaseManageUsers.loginWithEmailPassword;
+      register = FirebaseManageUsers.registerWithEmailPasswordName;
+      sendPasswordResetEmail = FirebaseManageUsers.sendPasswordResetEmail;
+      signOut = FirebaseManageUsers.signOut;
+    }
+  }
 
   /// App Name to display in Login/Registration pages
   final String appName;
@@ -26,29 +42,85 @@ class LoginPage extends StatelessWidget {
   /// widget or page to display when user is logged in
   final Widget child;
 
-  /// if this is true then it listens for the firebase auth state changes
-  final bool? isUsingFirebaseAuth;
+  /// if this is true then default [FirebaseAuth] authentication methods will be
+  /// assigned to [login], [checkEmail], [register], [sendPasswordResetEmail], [signOut]
+  final bool isUsingFirebaseAuth;
 
   /// A REGULAR EXPRESSION of a valid password
   final String passwordRegex;
 
   /// A message to be displayed to the user when the password does not match with [passwordRegex]
+  ///
   /// this should not be null if [passwordRequirements] is null and vice versa.
+  ///
   /// if want to show simple one message use this or use [passwordRequirements] to display particular message
   final String? invalidPasswordMessage;
 
   /// A map containing pairs of regex of Each password requirements and message to display
+  ///
   /// e.g {r'(?=.*[0-9]).*' : "Password must contains at least one digit"}
+  ///
   /// This map is used to display particular messages of invalid password
+  ///
   /// if this is null then [invalidPasswordMessage] should not be null and vice versa.
   final Map<String, String>? passwordRequirements;
 
-  final Future<bool> Function(String, AuthProvider) checkEmail;
-  final Future<bool> Function(String, String, AuthProvider) login;
-  final Future<
-      bool> Function(String, String, String, AuthProvider) register;
-  final Future<bool> Function(String, AuthProvider) sentPasswordResetEmail;
-  final Future<void> Function(AuthProvider) logout;
+  /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.fetchSignInMethodsForEmail] will be used.
+  ///
+  /// other wise need to provide this method.
+  ///
+  /// the function that accepts an email and checks the email and returns [true] if the user is already
+  /// exists with the email, otherwise returns [false] if the user is new
+  ///
+  /// [AuthProvider] is used to update the widget to password widget if user is
+  /// exists with the email
+  ///
+  /// and if there is any thing wrong in email then assign
+  /// appropriate [AuthExceptionType] to the [AuthProvider.authExceptionType]
+  late final Future<bool> Function(String, AuthProvider)? checkEmail;
+
+  /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.signInWithEmailAndPassword] will be used.
+  ///
+  /// other wise need to provide this method.
+  ///
+  /// the function that accepts email and password and return true if the email and
+  /// password are valid and let user login other wise return false
+  ///
+  /// and if email and password does not match or any thing wrong in email or password
+  /// then assign appropriate [AuthExceptionType] to the [AuthProvider.authExceptionType]
+  late final Future<bool> Function(String, String, AuthProvider)? login;
+
+  /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.createUserWithEmailAndPassword] will be used.
+  ///
+  /// other wise need to provide this method.
+  ///
+  /// the function that accepts email, password and name and create an account
+  /// with the provided details
+  ///
+  /// if any error is there then need to assign appropriate [AuthExceptionType]
+  /// to the [AuthProvider.authExceptionType]
+  late final Future<bool> Function(String, String, String, AuthProvider)? register;
+
+  /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.sendPasswordResetEmail] will be used.
+  ///
+  /// other wise need to provide this method.
+  ///
+  /// the function that accepts an email and sends a password reset email to the
+  /// provided email,
+  /// returns [true] if the password reset email sends successfully otherwise returns false
+  ///
+  /// if any error is there then need to assign appropriate [AuthExceptionType]
+  /// to the [AuthProvider.authExceptionType]
+  late final Future<bool> Function(String, AuthProvider)? sendPasswordResetEmail;
+
+  /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.signOut] will be used.
+  ///
+  /// other wise need to provide this method.
+  ///
+  /// the function that sign out the user
+  /// /// if any error is there then need to assign appropriate [AuthExceptionType]
+  /// to the [AuthProvider.authExceptionType]
+  late final Future<void> Function(AuthProvider)? signOut;
 
   @override
   Widget build(BuildContext context) {
@@ -58,14 +130,14 @@ class LoginPage extends StatelessWidget {
           case AuthState.loggedIn:
             return child;
           case AuthState.loggedOut:
-            return AuthWidget(appName: appName, child: EmailWidget(appName: appName, authProvider: authProvider, checkEmail: checkEmail,));
+            return AuthWidget(appName: appName, child: EmailWidget(appName: appName, authProvider: authProvider, checkEmail: checkEmail!,));
           case AuthState.password:
-            return AuthWidget(appName: appName, child: PasswordWidget(authProvider: authProvider, login: login,));
+            return AuthWidget(appName: appName, child: PasswordWidget(authProvider: authProvider, login: login!,));
           case AuthState.register:
             return AuthWidget(appName: appName, child: RegistrationWidget(authProvider: authProvider,
-                register: register, passwordRegex: passwordRegex,invalidPasswordMessage: invalidPasswordMessage, passwordRequirements: passwordRequirements));
+                register: register!, passwordRegex: passwordRegex,invalidPasswordMessage: invalidPasswordMessage, passwordRequirements: passwordRequirements));
           case AuthState.forgotPassword:
-            return AuthWidget(appName: appName, child: ForgotPasswordWidget(authProvider: authProvider, checkEmail: checkEmail, sendPasswordResetEmail: sentPasswordResetEmail,));
+            return AuthWidget(appName: appName, child: ForgotPasswordWidget(authProvider: authProvider, checkEmail: checkEmail!, sendPasswordResetEmail: sendPasswordResetEmail!,));
         }
       },
     );
@@ -107,7 +179,7 @@ class AuthWidget extends StatelessWidget {
                             color: Theme.of(context).colorScheme.primary,
                             isBold: true
                         ),),
-                        sizedBoxWithHeight10,
+                        const Divider(),
                         sizedBoxWithHeight10,
                         Builder(
                             builder: (context) {
@@ -224,6 +296,7 @@ class PasswordWidget extends StatefulWidget {
 class _PasswordWidgetState extends State<PasswordWidget> {
   final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
+  bool _showPassword = false;
 
   @override
   void initState() {
@@ -257,10 +330,17 @@ class _PasswordWidgetState extends State<PasswordWidget> {
               EmailFieldNotEditable(authProvider: widget.authProvider),
               sizedBoxWithHeight10,
               TextFormField(
+                obscureText: !_showPassword,
                 controller: _passwordController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                     hintText: "Enter password",
-                    labelText: "Password"
+                    labelText: "Password",
+                    isDense: true,
+                    suffix: IconButton(onPressed: (){
+                      setVariables(mounted, setState, () {
+                        _showPassword = !_showPassword;
+                      });
+                    }, icon: Icon(!_showPassword ? Icons.visibility : Icons.visibility_off, color: Theme.of(context).colorScheme.primary, size: 24,))
                 ),
                 validator: (password){
                   if(password == null || password.isEmpty){
@@ -556,6 +636,8 @@ class PasswordTextField extends StatefulWidget {
 
 class _PasswordTextFieldState extends State<PasswordTextField> {
   String password = "";
+  bool _showPassword = false;
+  bool _showReEnterPassword = false;
   @override
   void initState() {
     // TODO: implement initState
@@ -571,10 +653,16 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
     return Column(
       children: [
         TextFormField(
+          obscureText: !_showPassword,
           controller: widget.passwordController,
-          decoration: const InputDecoration(
-            hintText: "Enter password",
-            labelText: "Password",
+          decoration: InputDecoration(
+              hintText: "Enter password",
+              labelText: "Password",
+              suffix: IconButton(onPressed: (){
+                setVariables(mounted, setState, () {
+                  _showPassword = !_showPassword;
+                });
+              }, icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility, color: Theme.of(context).colorScheme.primary,))
           ),
           autovalidateMode: AutovalidateMode.onUserInteraction,
           validator: (password){
@@ -599,10 +687,16 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
           children: [
             sizedBoxWithWidth10,
             TextFormField(
+              obscureText: !_showReEnterPassword,
               controller: widget.reEnterPasswordController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                   labelText: "Re Enter Password",
-                  hintText: "Enter password again"
+                  hintText: "Enter password again",
+                  suffix: IconButton(onPressed: (){
+                    setVariables(mounted, setState, () {
+                      _showReEnterPassword = !_showReEnterPassword;
+                    });
+                  }, icon: Icon(_showReEnterPassword ? Icons.visibility_off : Icons.visibility, color: Theme.of(context).colorScheme.primary,))
               ),
               validator: (reEnterPassword){
                 if(reEnterPassword == null || reEnterPassword.isEmpty){
