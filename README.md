@@ -77,3 +77,5 @@ void initializeLoginState(AuthProvider authProvider){
   }
 ```
 
+* Note: Check for console while running flutter app in debug mode for any Exceptions if any functionality is not working.
+

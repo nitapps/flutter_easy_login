@@ -1,6 +1,6 @@
 name: flutter_easy_login
 description: An Easy to implement Authentication (Login and registration, forgot password) UI in flutter apps. For authentication you can use firebase or your own authentications service.
-version: 0.0.1
+version: 0.0.4
 homepage: https://nitapps.github.io
 
 environment:

@@ -15,10 +15,10 @@ import 'models/helper_functions.dart';
 ///
 /// If user is logged in then the [child] screen is shown as the home screen
 class LoginPage extends StatelessWidget {
-  LoginPage({super.key,  required this.appName, required this.child, required this.passwordRegex,
-    this.invalidPasswordMessage, this.passwordRequirements, this.checkEmail,
-    this.login, this.register, this.sendPasswordResetEmail, this.signOut, this.
-    isUsingFirebaseAuth = false}) :assert(
+   const LoginPage({super.key,  required this.appName, required this.child, required this.passwordRegex,
+    this.invalidPasswordMessage, this.passwordRequirements,this.
+     isUsingFirebaseAuth = false, this.checkEmail,
+    this.login, this.register, this.sendPasswordResetEmail, this.signOut,}) :assert(
   invalidPasswordMessage == null || passwordRequirements == null,
   "Cannot provide both values, either use invalidPasswordMessage or passwordRequirements"
   ),assert( isUsingFirebaseAuth ||
@@ -26,15 +26,7 @@ class LoginPage extends StatelessWidget {
       && sendPasswordResetEmail != null && signOut != null),
   "If [isUsingFirebaseAuth] is false then must provide methods for [checkEmail],"
       "[login], [register], [sendPasswordResetEmail] and [logout]"
-  ){
-    if(isUsingFirebaseAuth){
-      checkEmail = FirebaseManageUsers.doesAccountExistWithThis;
-      login = FirebaseManageUsers.loginWithEmailPassword;
-      register = FirebaseManageUsers.registerWithEmailPasswordName;
-      sendPasswordResetEmail = FirebaseManageUsers.sendPasswordResetEmail;
-      signOut = FirebaseManageUsers.signOut;
-    }
-  }
+  );
 
   /// App Name to display in Login/Registration pages
   final String appName;
@@ -77,7 +69,7 @@ class LoginPage extends StatelessWidget {
   ///
   /// and if there is any thing wrong in email then assign
   /// appropriate [AuthExceptionType] to the [AuthProvider.authExceptionType]
-  late final Future<bool> Function(String, AuthProvider)? checkEmail;
+  final Future<bool> Function(String, AuthProvider)? checkEmail;
 
   /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.signInWithEmailAndPassword] will be used.
   ///
@@ -88,7 +80,7 @@ class LoginPage extends StatelessWidget {
   ///
   /// and if email and password does not match or any thing wrong in email or password
   /// then assign appropriate [AuthExceptionType] to the [AuthProvider.authExceptionType]
-  late final Future<bool> Function(String, String, AuthProvider)? login;
+  final Future<bool> Function(String, String, AuthProvider)? login;
 
   /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.createUserWithEmailAndPassword] will be used.
   ///
@@ -99,7 +91,7 @@ class LoginPage extends StatelessWidget {
   ///
   /// if any error is there then need to assign appropriate [AuthExceptionType]
   /// to the [AuthProvider.authExceptionType]
-  late final Future<bool> Function(String, String, String, AuthProvider)? register;
+  final Future<bool> Function(String, String, String, AuthProvider)? register;
 
   /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.sendPasswordResetEmail] will be used.
   ///
@@ -111,7 +103,7 @@ class LoginPage extends StatelessWidget {
   ///
   /// if any error is there then need to assign appropriate [AuthExceptionType]
   /// to the [AuthProvider.authExceptionType]
-  late final Future<bool> Function(String, AuthProvider)? sendPasswordResetEmail;
+  final Future<bool> Function(String, AuthProvider)? sendPasswordResetEmail;
 
   /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.signOut] will be used.
   ///
@@ -120,7 +112,7 @@ class LoginPage extends StatelessWidget {
   /// the function that sign out the user
   /// /// if any error is there then need to assign appropriate [AuthExceptionType]
   /// to the [AuthProvider.authExceptionType]
-  late final Future<void> Function(AuthProvider)? signOut;
+  final Future<void> Function(AuthProvider)? signOut;
 
   @override
   Widget build(BuildContext context) {
@@ -130,14 +122,14 @@ class LoginPage extends StatelessWidget {
           case AuthState.loggedIn:
             return child;
           case AuthState.loggedOut:
-            return AuthWidget(appName: appName, child: EmailWidget(appName: appName, authProvider: authProvider, checkEmail: checkEmail!,));
+            return AuthWidget(appName: appName, child: EmailWidget(appName: appName, authProvider: authProvider, checkEmail: isUsingFirebaseAuth ? FirebaseManageUsers.doesAccountExistWithThis : checkEmail,));
           case AuthState.password:
-            return AuthWidget(appName: appName, child: PasswordWidget(authProvider: authProvider, login: login!,));
+            return AuthWidget(appName: appName, child: PasswordWidget(authProvider: authProvider, login: isUsingFirebaseAuth ? FirebaseManageUsers.loginWithEmailPassword : login,));
           case AuthState.register:
             return AuthWidget(appName: appName, child: RegistrationWidget(authProvider: authProvider,
-                register: register!, passwordRegex: passwordRegex,invalidPasswordMessage: invalidPasswordMessage, passwordRequirements: passwordRequirements));
+                register: isUsingFirebaseAuth ? FirebaseManageUsers.registerWithEmailPasswordName : register, passwordRegex: passwordRegex,invalidPasswordMessage: invalidPasswordMessage, passwordRequirements: passwordRequirements));
           case AuthState.forgotPassword:
-            return AuthWidget(appName: appName, child: ForgotPasswordWidget(authProvider: authProvider, checkEmail: checkEmail!, sendPasswordResetEmail: sendPasswordResetEmail!,));
+            return AuthWidget(appName: appName, child: ForgotPasswordWidget(authProvider: authProvider, checkEmail: isUsingFirebaseAuth ? FirebaseManageUsers.doesAccountExistWithThis : checkEmail, sendPasswordResetEmail: isUsingFirebaseAuth ? FirebaseManageUsers.sendPasswordResetEmail : sendPasswordResetEmail,));
         }
       },
     );
@@ -211,7 +203,7 @@ class AuthWidget extends StatelessWidget {
 class EmailWidget extends StatefulWidget {
   const EmailWidget({super.key, required this.authProvider, required this.checkEmail, required this.appName});
   final AuthProvider authProvider;
-  final Future<bool> Function(String, AuthProvider) checkEmail;
+  final Future<bool> Function(String, AuthProvider)? checkEmail;
   final String appName;
 
   @override
@@ -230,14 +222,17 @@ class _EmailWidgetState extends State<EmailWidget> {
 
   Future<void> checkEmail() async {
     if (_formKey.currentState!.validate()) {
-
-      final result = await widget.authProvider.isAccountExistWithThis(_emailController.text, widget.authProvider, widget.checkEmail);
-      if(result){
-        widget.authProvider.authState = AuthState.password;
+      if (widget.checkEmail != null) {
+        final result = await widget.authProvider.isAccountExistWithThis(_emailController.text, widget.authProvider, widget.checkEmail!);
+        if(result){
+          widget.authProvider.authState = AuthState.password;
+        }else{
+          widget.authProvider.authState = AuthState.register;
+        }
+        widget.authProvider.notify();
       }else{
-        widget.authProvider.authState = AuthState.register;
+        printToConsole("Exception: checkEmail() method is null. Please provide checkEmail method for LoginPage if isUsingFirebaseAuth is false");
       }
-      widget.authProvider.notify();
     }
   }
 
@@ -286,7 +281,7 @@ class _EmailWidgetState extends State<EmailWidget> {
 class PasswordWidget extends StatefulWidget {
   const PasswordWidget({super.key, required this.authProvider, required this.login});
   final AuthProvider authProvider;
-  final Future<bool> Function(String, String, AuthProvider) login;
+  final Future<bool> Function(String, String, AuthProvider)? login;
 
   @override
   State<PasswordWidget> createState() => _PasswordWidgetState();
@@ -315,7 +310,11 @@ class _PasswordWidgetState extends State<PasswordWidget> {
   }
   void login() {
     if (_formKey.currentState != null && _formKey.currentState!.validate()) {
-      widget.authProvider.loginWith(widget.authProvider.email ?? "", _passwordController.text,widget.authProvider, widget.login);
+      if (widget.login != null) {
+        widget.authProvider.loginWith(widget.authProvider.email ?? "", _passwordController.text,widget.authProvider, widget.login!);
+      }else{
+        printToConsole("Exception: login() method is null. Please provide login method for LoginPage if isUsingFirebaseAuth is false");
+      }
     }
   }
 
@@ -370,7 +369,7 @@ class RegistrationWidget extends StatefulWidget {
   const RegistrationWidget({super.key, required this.authProvider, required this.register, this.passwordRequirements, this.invalidPasswordMessage, required this.passwordRegex,}):
         assert(passwordRequirements != null || invalidPasswordMessage != null);
   final AuthProvider authProvider;
-  final Future<bool> Function(String, String, String, AuthProvider) register;
+  final Future<bool> Function(String, String, String, AuthProvider)? register;
   final String passwordRegex;
   final Map<String, String>? passwordRequirements;
   final String? invalidPasswordMessage;
@@ -450,7 +449,11 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
               isLoading: widget.authProvider.isLoading,
               onTap: (){
                 if (_formKey.currentState != null && _formKey.currentState!.validate()) {
-                  widget.authProvider.registerWith(widget.authProvider.email ?? "", _passwordController.text, _nameController.text, widget.authProvider,widget.register);
+                  if (widget.register != null) {
+                    widget.authProvider.registerWith(widget.authProvider.email ?? "", _passwordController.text, _nameController.text, widget.authProvider,widget.register!);
+                  }else{
+                    printToConsole("Exception: register() method is null. Please provide register method for LoginPage if isUsingFirebaseAuth is false.");
+                  }
                 }
               },),
             sizedBoxWithHeight10,
@@ -471,8 +474,8 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
 class ForgotPasswordWidget extends StatefulWidget {
   const ForgotPasswordWidget({super.key, required this.authProvider, required this.checkEmail, required this.sendPasswordResetEmail});
   final AuthProvider authProvider;
-  final Future<bool> Function(String, AuthProvider) checkEmail;
-  final Future<bool> Function(String, AuthProvider) sendPasswordResetEmail;
+  final Future<bool> Function(String, AuthProvider)? checkEmail;
+  final Future<bool> Function(String, AuthProvider)? sendPasswordResetEmail;
 
   @override
   State<ForgotPasswordWidget> createState() => _ForgotPasswordWidgetState();
@@ -515,15 +518,21 @@ class _ForgotPasswordWidgetState extends State<ForgotPasswordWidget> {
             isLoading: widget.authProvider.isLoading,
             onTap: () async {
               if(_formKey.currentState != null && _formKey.currentState!.validate()){
-                final result = await widget.authProvider.isAccountExistWithThis(_emailController.text,widget.authProvider, widget.checkEmail);
-                if(result){
-                  final result = await widget.authProvider.sendPasswordResetEmailFor(_emailController.text, widget.authProvider,widget.sendPasswordResetEmail);
+                if (widget.checkEmail != null && widget.sendPasswordResetEmail != null) {
+                  final result = await widget.authProvider.isAccountExistWithThis(_emailController.text,widget.authProvider, widget.checkEmail!);
                   if(result){
-                    if (context.mounted) {
-                      showSnackBar(context, "Password reset email is successfully to your email: ${_emailController.text}");
-                      Navigator.pop(context);
+                    final result = await widget.authProvider.sendPasswordResetEmailFor(_emailController.text, widget.authProvider,widget.sendPasswordResetEmail!);
+                    if(result){
+                      if (context.mounted) {
+                        showSnackBar(context, "Password reset email is successfully to your email: ${_emailController.text}");
+                        Navigator.pop(context);
+                      }
                     }
                   }
+                }else if(widget.checkEmail == null){
+                  printToConsole("Exception: checkEmail() method is null. Please provide checkEmail method for LoginPage if isUsingFirebaseAuth is false.");
+                }else{
+                  printToConsole("Exception: sendPasswordResetEmail() method is null. Please provide sendPasswordResetEmail method for LoginPage if isUsingFirebaseAuth is false.");
                 }
               }
             },)

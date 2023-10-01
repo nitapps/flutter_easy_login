@@ -86,7 +86,7 @@ class ButtonFilled extends StatelessWidget {
     return ButtonContainer(label: label,
         color: color ?? Theme.of(context).colorScheme.onPrimary,
         backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.primary,
-        borderColor: backgroundColor ?? Theme.of(context).colorScheme.primary);
+        borderColor: backgroundColor ?? Theme.of(context).colorScheme.primary, isLoading: isLoading,);
   }
 }
 
@@ -107,7 +107,7 @@ class ButtonOutlined extends StatelessWidget {
     return ButtonContainer(label: label,
         color: color ?? Theme.of(context).colorScheme.primary,
         backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.onPrimary,
-        borderColor: color ?? Theme.of(context).colorScheme.primary);
+        borderColor: color ?? Theme.of(context).colorScheme.primary, isLoading: isLoading,);
   }
 }
 class ButtonContainer extends StatelessWidget {
