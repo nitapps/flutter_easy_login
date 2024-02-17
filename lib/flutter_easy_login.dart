@@ -15,7 +15,7 @@ import 'models/helper_functions.dart';
 ///
 /// If user is logged in then the [child] screen is shown as the home screen
 class LoginPage extends StatelessWidget {
-   const LoginPage({super.key,  required this.appName, required this.child, required this.passwordRegex,
+   const  LoginPage({super.key,  required this.appName, required this.child, required this.passwordRegex,
     this.invalidPasswordMessage, this.passwordRequirements,this.
      isUsingFirebaseAuth = false, this.checkEmail,
     this.login, this.register, this.sendPasswordResetEmail, this.signOut,}) :assert(
@@ -64,12 +64,12 @@ class LoginPage extends StatelessWidget {
   /// the function that accepts an email and checks the email and returns [true] if the user is already
   /// exists with the email, otherwise returns [false] if the user is new
   ///
-  /// [AuthProvider] is used to update the widget to password widget if user is
+  /// [AuthenticationProvider] is used to update the widget to password widget if user is
   /// exists with the email
   ///
   /// and if there is any thing wrong in email then assign
-  /// appropriate [AuthExceptionType] to the [AuthProvider.authExceptionType]
-  final Future<bool> Function(String, AuthProvider)? checkEmail;
+  /// appropriate [AuthExceptionType] to the [AuthenticationProvider.authExceptionType]
+  final Future<bool> Function(String, AuthenticationProvider)? checkEmail;
 
   /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.signInWithEmailAndPassword] will be used.
   ///
@@ -79,8 +79,8 @@ class LoginPage extends StatelessWidget {
   /// password are valid and let user login other wise return false
   ///
   /// and if email and password does not match or any thing wrong in email or password
-  /// then assign appropriate [AuthExceptionType] to the [AuthProvider.authExceptionType]
-  final Future<bool> Function(String, String, AuthProvider)? login;
+  /// then assign appropriate [AuthExceptionType] to the [AuthenticationProvider.authExceptionType]
+  final Future<bool> Function(String, String, AuthenticationProvider)? login;
 
   /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.createUserWithEmailAndPassword] will be used.
   ///
@@ -90,8 +90,8 @@ class LoginPage extends StatelessWidget {
   /// with the provided details
   ///
   /// if any error is there then need to assign appropriate [AuthExceptionType]
-  /// to the [AuthProvider.authExceptionType]
-  final Future<bool> Function(String, String, String, AuthProvider)? register;
+  /// to the [AuthenticationProvider.authExceptionType]
+  final Future<bool> Function(String, String, String, AuthenticationProvider)? register;
 
   /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.sendPasswordResetEmail] will be used.
   ///
@@ -102,8 +102,8 @@ class LoginPage extends StatelessWidget {
   /// returns [true] if the password reset email sends successfully otherwise returns false
   ///
   /// if any error is there then need to assign appropriate [AuthExceptionType]
-  /// to the [AuthProvider.authExceptionType]
-  final Future<bool> Function(String, AuthProvider)? sendPasswordResetEmail;
+  /// to the [AuthenticationProvider.authExceptionType]
+  final Future<bool> Function(String, AuthenticationProvider)? sendPasswordResetEmail;
 
   /// If [isUsingFirebaseAuth] is true then default [FirebaseAuth.signOut] will be used.
   ///
@@ -111,12 +111,12 @@ class LoginPage extends StatelessWidget {
   ///
   /// the function that sign out the user
   /// /// if any error is there then need to assign appropriate [AuthExceptionType]
-  /// to the [AuthProvider.authExceptionType]
-  final Future<void> Function(AuthProvider)? signOut;
+  /// to the [AuthenticationProvider.authExceptionType]
+  final Future<void> Function(AuthenticationProvider)? signOut;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
+    return Consumer<AuthenticationProvider>(
       builder: (context, authProvider, _) {
         switch(authProvider.authState){
           case AuthState.loggedIn:
@@ -136,6 +136,7 @@ class LoginPage extends StatelessWidget {
   }
 }
 
+/// A widget that shows its child if internet is connected, if not it shows no internet error
 class AuthWidget extends StatelessWidget {
   const AuthWidget({super.key, required this.child, required this.appName});
   final Widget child;
@@ -200,10 +201,11 @@ class AuthWidget extends StatelessWidget {
   }
 }
 
+/// a widget shown when [AuthState] is [AuthState.loggedOut]
 class EmailWidget extends StatefulWidget {
   const EmailWidget({super.key, required this.authProvider, required this.checkEmail, required this.appName});
-  final AuthProvider authProvider;
-  final Future<bool> Function(String, AuthProvider)? checkEmail;
+  final AuthenticationProvider authProvider;
+  final Future<bool> Function(String, AuthenticationProvider)? checkEmail;
   final String appName;
 
   @override
@@ -278,10 +280,11 @@ class _EmailWidgetState extends State<EmailWidget> {
   }
 }
 
+/// a widget shown when [AuthState] is [AuthState.password]
 class PasswordWidget extends StatefulWidget {
   const PasswordWidget({super.key, required this.authProvider, required this.login});
-  final AuthProvider authProvider;
-  final Future<bool> Function(String, String, AuthProvider)? login;
+  final AuthenticationProvider authProvider;
+  final Future<bool> Function(String, String, AuthenticationProvider)? login;
 
   @override
   State<PasswordWidget> createState() => _PasswordWidgetState();
@@ -365,11 +368,12 @@ class _PasswordWidgetState extends State<PasswordWidget> {
   }
 }
 
+/// a widget shown when [AuthState] is [AuthState.register]
 class RegistrationWidget extends StatefulWidget {
   const RegistrationWidget({super.key, required this.authProvider, required this.register, this.passwordRequirements, this.invalidPasswordMessage, required this.passwordRegex,}):
         assert(passwordRequirements != null || invalidPasswordMessage != null);
-  final AuthProvider authProvider;
-  final Future<bool> Function(String, String, String, AuthProvider)? register;
+  final AuthenticationProvider authProvider;
+  final Future<bool> Function(String, String, String, AuthenticationProvider)? register;
   final String passwordRegex;
   final Map<String, String>? passwordRequirements;
   final String? invalidPasswordMessage;
@@ -471,11 +475,12 @@ class _RegistrationWidgetState extends State<RegistrationWidget> {
   }
 }
 
+/// a widget shown when [AuthState] is [AuthState.forgotPassword]
 class ForgotPasswordWidget extends StatefulWidget {
   const ForgotPasswordWidget({super.key, required this.authProvider, required this.checkEmail, required this.sendPasswordResetEmail});
-  final AuthProvider authProvider;
-  final Future<bool> Function(String, AuthProvider)? checkEmail;
-  final Future<bool> Function(String, AuthProvider)? sendPasswordResetEmail;
+  final AuthenticationProvider authProvider;
+  final Future<bool> Function(String, AuthenticationProvider)? checkEmail;
+  final Future<bool> Function(String, AuthenticationProvider)? sendPasswordResetEmail;
 
   @override
   State<ForgotPasswordWidget> createState() => _ForgotPasswordWidgetState();
@@ -543,10 +548,10 @@ class _ForgotPasswordWidgetState extends State<ForgotPasswordWidget> {
 }
 
 
-
+/// A text edit field for email
 class EmailFieldNotEditable extends StatelessWidget {
   const EmailFieldNotEditable({super.key, required this.authProvider});
-  final AuthProvider authProvider;
+  final AuthenticationProvider authProvider;
 
   @override
   Widget build(BuildContext context) {
@@ -568,9 +573,10 @@ class EmailFieldNotEditable extends StatelessWidget {
   }
 }
 
+/// A widget that displays the Authentication error
 class AuthExceptionTypeErrorWidget extends StatelessWidget {
   const AuthExceptionTypeErrorWidget({super.key, required this.authProvider});
-  final AuthProvider authProvider;
+  final AuthenticationProvider authProvider;
 
   @override
   Widget build(BuildContext context) {
@@ -583,6 +589,7 @@ class AuthExceptionTypeErrorWidget extends StatelessWidget {
   }
 }
 
+/// A widget that displays the user entered password matching the password requirements
 class PasswordRequirementsWidget extends StatelessWidget {
   const PasswordRequirementsWidget({super.key, required this.authProvider, required this.password, required this.passwordRegex, this.invalidPasswordMessage, this.passwordRequirements}):
         assert(passwordRequirements != null || invalidPasswordMessage != null, "In both passwordRequirements and invalidPassword any one should be provided");
@@ -593,7 +600,7 @@ class PasswordRequirementsWidget extends StatelessWidget {
   // /// in green color otherwise in red color
   // /// **it should contains at least one regex and its message
   // final Map<String, String> passwordRequirements;
-  final AuthProvider authProvider;
+  final AuthenticationProvider authProvider;
 
   final String? password;
 
@@ -630,11 +637,12 @@ class PasswordRequirementsWidget extends StatelessWidget {
   }
 }
 
+/// a text field that is used for password
 class PasswordTextField extends StatefulWidget {
   const PasswordTextField({super.key, required this.passwordController,required this.reEnterPasswordController, required this.authProvider, required this.invalidPasswordMessage, this.passwordRequirements, required this.passwordRegex});
   final TextEditingController passwordController;
   final TextEditingController reEnterPasswordController;
-  final AuthProvider authProvider;
+  final AuthenticationProvider authProvider;
   final String passwordRegex;
   final String? invalidPasswordMessage;
   final Map<String, String>? passwordRequirements;

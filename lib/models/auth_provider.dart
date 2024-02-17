@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 ///
 /// this provider need to be created in the [main] method - [runApp] method with
 /// the [ChangeNotifierProvider]
-class AuthProvider extends ChangeNotifier{
+class AuthenticationProvider extends ChangeNotifier{
   AuthState authState = AuthState.loggedOut;
   String? userName;
   String? email;
@@ -23,9 +23,9 @@ class AuthProvider extends ChangeNotifier{
 
   /// checks the user is logged in or not and based on that updates the
   /// [email] and [authState]
-  final void Function(AuthProvider) initializeLoginState;
+  final void Function(AuthenticationProvider) initializeLoginState;
 
-  AuthProvider(this.initializeLoginState){
+  AuthenticationProvider(this.initializeLoginState){
     initializeLoginState(this);
   }
 
@@ -33,7 +33,8 @@ class AuthProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  Future<void> doLogout(AuthProvider authProvider, Future<void> Function(AuthProvider) logout) async {
+  /// logout
+  Future<void> doLogout(AuthenticationProvider authProvider, Future<void> Function(AuthenticationProvider) logout) async {
     isLoading = true;
     authExceptionType = null;
     notifyListeners();
@@ -44,7 +45,8 @@ class AuthProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  Future<bool> isAccountExistWithThis(String email, AuthProvider authProvider, Future<bool> Function(String email, AuthProvider) checkEmail) async {
+  /// check whether any account exist with the [email]
+  Future<bool> isAccountExistWithThis(String email, AuthenticationProvider authProvider, Future<bool> Function(String email, AuthenticationProvider) checkEmail) async {
     isLoading = true;
     authExceptionType = null;
     this.email = null;
@@ -56,7 +58,8 @@ class AuthProvider extends ChangeNotifier{
     return result;
   }
 
-  Future<bool> loginWith(String email, String password, AuthProvider authProvider, Future<bool> Function(String,String, AuthProvider) login) async {
+  /// login with [email] and [password]
+  Future<bool> loginWith(String email, String password, AuthenticationProvider authProvider, Future<bool> Function(String,String, AuthenticationProvider) login) async {
     isLoading = true;
     authExceptionType = null;
     notifyListeners();
@@ -76,7 +79,8 @@ class AuthProvider extends ChangeNotifier{
     return isLoginSuccess;
   }
 
-  Future<bool> registerWith(String email, String password, String name, AuthProvider authProvider, Future<bool> Function(String, String, String, AuthProvider) register) async {
+  /// register with [email], [password], [name]
+  Future<bool> registerWith(String email, String password, String name, AuthenticationProvider authProvider, Future<bool> Function(String, String, String, AuthenticationProvider) register) async {
     isLoading = true;
     authExceptionType = null;
     notifyListeners();
@@ -96,7 +100,8 @@ class AuthProvider extends ChangeNotifier{
     return isRegistrationSuccess;
   }
 
-  Future<bool> sendPasswordResetEmailFor(String email, AuthProvider authProvider, Future<bool> Function(String, AuthProvider) sendPasswordResetEmail) async {
+  /// sends a password reset email to the provided [email]
+  Future<bool> sendPasswordResetEmailFor(String email, AuthenticationProvider authProvider, Future<bool> Function(String, AuthenticationProvider) sendPasswordResetEmail) async {
     isLoading = true;
     authExceptionType = null;
     notifyListeners();
@@ -108,13 +113,16 @@ class AuthProvider extends ChangeNotifier{
   }
 }
 
+/// Authentication states
 enum AuthState{
   loggedIn, loggedOut, password, register,forgotPassword
 }
 
-
+/// a constants class used to provide information regarding authentication exceptions
 class AuthExceptions{
   AuthExceptions._();
+
+  /// constant values
   static const invalidEmail = "invalid-email";
   static const userDisabled = "user-disabled";
   static const userNotFound = "user-not-found";
@@ -145,6 +153,8 @@ class AuthExceptions{
     wrongPassword: AuthExceptionType.wrongPassword,
     unknown: AuthExceptionType.unknown
   };
+
+  /// a map consisting of [AuthExceptionType] to its description
   static const Map<AuthExceptionType, String> messageOfType ={
     AuthExceptionType.invalidEmail: "Invalid Email! Please enter proper Email.",
     AuthExceptionType.userNotFound: "User not found. Please check your email or Register.",
@@ -163,9 +173,47 @@ class AuthExceptions{
   };
 }
 
+/// Auth exception types
 enum AuthExceptionType{
-  invalidEmail,userDisabled,userNotFound,wrongPassword,emailAlreadyInUse,
-  operationNotAllowed, weakPassword,expiredActionCode,invalidActionCode,
-  missingAndroidPkgName,missingContinueUri,missingIosBundleId,
-  unauthorizedContinueUri, unknown
+  /// Specify that the email is not a proper email ID
+  invalidEmail,
+
+  /// Specify that user account is disabled
+  userDisabled,
+
+  /// Specify that the user with the email id is not registered
+  userNotFound,
+
+  /// Tells that the password is not correct
+  wrongPassword,
+
+  /// Tells that the email user is using to register is already have used
+  emailAlreadyInUse,
+
+  /// due to some reason user is not allowed
+  operationNotAllowed,
+
+  /// the password user entered is weak
+  weakPassword,
+
+  /// The code is expired
+  expiredActionCode,
+
+  /// the action code is invalid
+  invalidActionCode,
+
+  /// An Android Package Name must be provided if the Android App is required to be installed.
+  missingAndroidPkgName,
+
+  /// A valid continue URL must be provided in the request.
+  missingContinueUri,
+
+  /// The request is missing a Bundle ID.
+  missingIosBundleId,
+
+  /// The domain of the continue URL is not whitelisted. Whitelist the domain in the Firebase Console.
+  unauthorizedContinueUri,
+
+  /// unknown error
+  unknown
 }

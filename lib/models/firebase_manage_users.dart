@@ -2,12 +2,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_provider.dart';
 import 'helper_functions.dart';
 
+/// a class used to manage firebase authentication
 class FirebaseManageUsers{
   FirebaseManageUsers._();
+  /// simple regex for password,
+  /// that checks the password has 6-32 chars or not
   static String regex = r"^.{6,32}$";
+
+  /// complex regex that validate a email id with the general email standards
   static String emailRegex = r"^(?=.{1,64}@)([a-zA-Z\d]+([\.\-_]?[a-zA-Z\d]+)*)@(?=.{4,63}$)([a-zA-Z\d]+([\.\-]?[a-zA-Z\d]+)*\.[a-zA-Z\d]{2,})$";
 
-  static void listenToFirebaseAuthStateChanges(AuthProvider authProvider){
+  /// initiate a listener for user authentication changes
+  static void listenToFirebaseAuthStateChanges(AuthenticationProvider authProvider){
     FirebaseAuth.instance.authStateChanges().listen((user) {
       if(user == null){
         authProvider.email = null;
@@ -22,7 +28,8 @@ class FirebaseManageUsers{
     });
   }
 
-  static Future<bool> doesAccountExistWithThis(String email, AuthProvider authProvider)async{
+  /// checks whether any account exist with the provided [email]
+  static Future<bool> doesAccountExistWithThis(String email, AuthenticationProvider authProvider)async{
     bool isAccountExists = false;
     try{
       final signInMethods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
@@ -38,7 +45,8 @@ class FirebaseManageUsers{
     return isAccountExists;
   }
 
-  static Future<bool> loginWithEmailPassword(String email, String password, AuthProvider authProvider)async{
+  /// login using [email] and [password]
+  static Future<bool> loginWithEmailPassword(String email, String password, AuthenticationProvider authProvider)async{
     bool isLoginSuccess = false;
     try {
       final userCredentials = await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
@@ -54,7 +62,8 @@ class FirebaseManageUsers{
     return isLoginSuccess;
   }
 
-  static Future<bool> registerWithEmailPasswordName(String email, String password, String name, AuthProvider authProvider) async {
+  /// registration with [email], [password] and [name]
+  static Future<bool> registerWithEmailPasswordName(String email, String password, String name, AuthenticationProvider authProvider) async {
     bool isRegistrationSuccessful = false;
     try {
       final userCredentials = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
@@ -70,7 +79,9 @@ class FirebaseManageUsers{
     }
     return isRegistrationSuccessful;
   }
-  static Future<bool> sendPasswordResetEmail(String email, AuthProvider authProvider) async {
+
+  /// sends password reset email to provided [email]
+  static Future<bool> sendPasswordResetEmail(String email, AuthenticationProvider authProvider) async {
     bool isPasswordResetEmailSent = false;
     try{
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
@@ -84,7 +95,8 @@ class FirebaseManageUsers{
     return isPasswordResetEmailSent;
   }
 
-  static Future<bool> updatePassword(String resetCode, String newPassword, AuthProvider authProvider) async {
+  /// updates password with [resetCode] and [newPassword]
+  static Future<bool> updatePassword(String resetCode, String newPassword, AuthenticationProvider authProvider) async {
     bool isPasswordResetCompleted = false;
     try {
       await FirebaseAuth.instance.confirmPasswordReset(code: resetCode, newPassword: newPassword);
@@ -97,7 +109,9 @@ class FirebaseManageUsers{
     }
     return isPasswordResetCompleted;
   }
-  static Future<void> signOut(AuthProvider authProvider) async {
+
+  /// logs out the user
+  static Future<void> signOut(AuthenticationProvider authProvider) async {
     try {
       await FirebaseAuth.instance.signOut();
     } on FirebaseAuthException catch (e) {

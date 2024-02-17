@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-// Empty SizedBox with height or width for spacing in row or column
+/// Empty SizedBox with height or width for spacing in row or column
 const sizedBoxWithHeight10 = SizedBox(height: 10,);
 const sizedBoxWithWidth10 = SizedBox(width: 10,);
 const sizedBoxWithWidth5 = SizedBox(width: 5,);
 
-// Valid Email format Regex
+/// Valid Email format Regex
 const emailRegex = r'^(?=.{1,64}@)([a-zA-Z\d]+([\.\-_]?[a-zA-Z\d]+)*)@(?=.{4,63}$)([a-zA-Z\d]+([\.\-]?[a-zA-Z\d]+)*\.[a-zA-Z\d]{2,})$';
 
 /// TextStyle with [fontSize] 14
